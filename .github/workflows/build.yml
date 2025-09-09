@@ -20,7 +20,7 @@ jobs:
           patch libstdc++6 rsync git meson ninja-build
       - name: Setup crosstool-ng
         run: |
-          git clone https://github.com/crosstool-ng/crosstool-ng
+          git clone --single-branch --branch crosstool-ng-1.28.0 https://github.com/crosstool-ng/crosstool-ng
           cd crosstool-ng
           ./bootstrap
           ./configure
