@@ -20,9 +20,7 @@ jobs:
           patch libstdc++6 rsync git meson ninja-build
       - name: Setup crosstool-ng
         run: |
-          git clone --single-branch --branch crosstool-ng-1.28.0 https://github.com/crosstool-ng/crosstool-ng
-          cd crosstool-ng
-          ./bootstrap
+          mkdir crosstool-ng && curl -L https://github.com/crosstool-ng/crosstool-ng/releases/download/crosstool-ng-1.28.0/crosstool-ng-1.28.0.tar.xz | tar -xJ -C crosstool-ng --strip-components=1          cd crosstool-ng
           ./configure
           make
           sudo make install
