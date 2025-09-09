@@ -36,9 +36,9 @@ jobs:
 
       - name: Archive toolchain
         run: tar -cvzf aarch64-systemcore-linux-gnu.tar.gz aarch64-systemcore-linux-gnu/
-        working-directory: ~/x-tools/
+        working-directory: /home/runner/x-tools/
       - name: Test toolchain
-        run: ./test/test-toolchain.sh -a ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
+        run: ./test/test-toolchain.sh -a /home/runner/x-tools/aarch64-systemcore-linux-gnu.tar.gz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
       - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
