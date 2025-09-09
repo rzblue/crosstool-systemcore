@@ -1,0 +1,36 @@
+name: Build cross-compiler
+
+permissions:
+  contents: write
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Setup crosstool-ng
+        run: |
+          git clone https://github.com/crosstool-ng/crosstool-ng
+          cd crosstool-ng
+          ./bootstrap
+          ./configure
+          make
+          sudo make install
+        working-directory: /tmp
+
+      - uses: actions/checkout@v5
+
+      - name: Build toolchain
+        run: |
+          ct-ng defconfig DEFCONFIG=systemcore_defconfig
+          ct-ng build
+
+      - name: Archive toolchain
+        run: tar -cvzf aarch64-systemcore-linux-gnu.tar.xz aarch64-systemcore-linux-gnu/
+        working-directory: ~/x-tools/
+      - name: Test toolchain
+        run: ./test/test-toolchain.sh -a ~/x-tools/aarch64-systemcore-linux-gnu.tar.xz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
