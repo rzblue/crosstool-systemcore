@@ -30,7 +30,12 @@ jobs:
           ct-ng build
 
       - name: Archive toolchain
-        run: tar -cvzf aarch64-systemcore-linux-gnu.tar.xz aarch64-systemcore-linux-gnu/
+        run: tar -cvzf aarch64-systemcore-linux-gnu.tar.gz aarch64-systemcore-linux-gnu/
         working-directory: ~/x-tools/
       - name: Test toolchain
-        run: ./test/test-toolchain.sh -a ~/x-tools/aarch64-systemcore-linux-gnu.tar.xz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
+        run: ./test/test-toolchain.sh -a ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
+      - name: Upload toolchain
+        uses: actions/upload-artifact@v4
+        with:
+          name: aarch64-systemcore-linux-gnu
+          path: ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz
