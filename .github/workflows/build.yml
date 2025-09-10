@@ -9,7 +9,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  build-linux-x64:
     runs-on: ubuntu-22.04
 
     steps:
@@ -47,6 +47,48 @@ jobs:
         working-directory: /home/runner/x-tools/
       - name: Test toolchain
         run: ./test/test-toolchain.sh -a /home/runner/x-tools/aarch64-systemcore-linux-gnu.tar.gz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
+      - name: Upload toolchain
+        uses: actions/upload-artifact@v4
+        with:
+          name: aarch64-systemcore-linux-gnu
+          path: ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz
+  build-macos-aarch64:
+    runs-on: macos-latest
+
+    steps:
+      - name: Install packages
+        run: | 
+          brew install autoconf automake bash binutils gawk gnu-sed \
+               gnu-tar help2man make meson ncurses ninja pkg-config texinfo libtool
+      - name: Setup crosstool-ng
+        run: |
+          mkdir crosstool-ng && curl -L https://github.com/crosstool-ng/crosstool-ng/releases/download/crosstool-ng-1.27.0/crosstool-ng-1.27.0.tar.xz | tar -xJ -C crosstool-ng --strip-components=1
+          cd crosstool-ng
+          ./configure
+          make
+          sudo make install
+        working-directory: /tmp
+
+      - uses: actions/checkout@v5
+      - name: Disable logging
+        # Progress bar spams non-interactive console
+        # File log dumps environment to uploaded artifact
+        run: |
+          cat >> systemcore_defconfig <<EOF
+          # CT_LOG_PROGRESS_BAR is not set
+          # CT_LOG_TO_FILE is not set
+          EOF
+
+      - name: Build toolchain
+        run: |
+          ct-ng defconfig DEFCONFIG=systemcore_defconfig
+          ct-ng build
+
+      - name: Archive toolchain
+        run: tar -cvzf aarch64-systemcore-linux-gnu.tar.gz aarch64-systemcore-linux-gnu/
+        working-directory: /Users/runner/x-tools/
+      - name: Test toolchain
+        run: ./test/test-toolchain.sh -a /Users/runner/x-tools/aarch64-systemcore-linux-gnu.tar.gz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
       - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
