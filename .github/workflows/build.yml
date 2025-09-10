@@ -73,7 +73,7 @@ jobs:
         run: |
           cd ..
           rmdir crosstool-systemcore
-          hdiutil create "${HOME}/Workspace.sparseimage" -volname crosstool-ng -type SPARSE -size 30g -fs HFSX
+          hdiutil create "${HOME}/Workspace.sparseimage" -volname crosstool-systemcore -type SPARSE -size 30g -fs HFSX
           hdiutil mount "${HOME}/Workspace.sparseimage" -mountroot /Users/runner/work/crosstool-systemcore
           cd crosstool-systemcore
       - uses: actions/checkout@v5
@@ -90,14 +90,15 @@ jobs:
         run: |
           ct-ng defconfig DEFCONFIG=systemcore_defconfig
           ct-ng build
-
+        env:
+          CT_PREFIX: ${{github.workspace}}/out
       - name: Archive toolchain
         run: tar -cvzf aarch64-systemcore-linux-gnu.tar.gz aarch64-systemcore-linux-gnu/
-        working-directory: /Users/runner/x-tools/
+        working-directory: out/
       - name: Test toolchain
-        run: ./test/test-toolchain.sh -a /Users/runner/x-tools/aarch64-systemcore-linux-gnu.tar.gz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
+        run: ./test/test-toolchain.sh -a ${{github.workspace}}/out/aarch64-systemcore-linux-gnu.tar.gz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
       - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
           name: aarch64-systemcore-linux-gnu
-          path: ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz
+          path: ${{github.workspace}}/out/aarch64-systemcore-linux-gnu.tar.gz
