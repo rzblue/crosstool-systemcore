@@ -28,6 +28,14 @@ jobs:
         working-directory: /tmp
 
       - uses: actions/checkout@v5
+      - name: Disable logging
+        # Progress bar spams non-interactive console
+        # File log dumps environment to uploaded artifact
+        run: |
+          cat >> systemcore_defconfig <<EOF
+          # CT_LOG_PROGRESS_BAR is not set
+          # CT_LOG_TO_FILE is not set
+          EOF
 
       - name: Build toolchain
         run: |
