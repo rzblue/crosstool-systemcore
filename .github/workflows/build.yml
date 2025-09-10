@@ -69,7 +69,13 @@ jobs:
           make
           sudo make install
         working-directory: /tmp
-
+      - name: create case sensitive workspace volume for macOS
+        run: |
+          cd ..
+          rmdir crosstool-systemcore
+          hdiutil create "${HOME}/Workspace.sparseimage" -volname crosstool-ng -type SPARSE -size 30g -fs HFSX
+          hdiutil mount "${HOME}/Workspace.sparseimage" -mountroot /Users/runner/work/crosstool-systemcore
+          cd crosstool-systemcore
       - uses: actions/checkout@v5
       - name: Disable logging
         # Progress bar spams non-interactive console
