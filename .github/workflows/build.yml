@@ -77,13 +77,12 @@ jobs:
           hdiutil mount "${HOME}/Workspace.sparseimage" -mountroot /Users/runner/work/crosstool-systemcore
           cd crosstool-systemcore
       - uses: actions/checkout@v5
-      - name: Disable logging
+      - name: Disable progress bar
         # Progress bar spams non-interactive console
         # File log dumps environment to uploaded artifact
         run: |
           cat >> systemcore_defconfig <<EOF
           # CT_LOG_PROGRESS_BAR is not set
-          # CT_LOG_TO_FILE is not set
           EOF
 
       - name: Build toolchain
@@ -92,6 +91,11 @@ jobs:
           ct-ng build
         env:
           CT_PREFIX: ${{github.workspace}}/out
+      - name: Upload log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{github.workspace}}/build.log
       - name: Archive toolchain
         run: tar -cvzf aarch64-systemcore-linux-gnu.tar.gz aarch64-systemcore-linux-gnu/
         working-directory: out/
