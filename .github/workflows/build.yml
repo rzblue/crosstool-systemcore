@@ -30,13 +30,9 @@ jobs:
         with:
           path: src.tar
           key: src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
-          restore-keys: |
-            src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-
-            src.tar-${{runner.os}}-
       - name: extract tarballs
         run: |
           tar -xvf src.tar || true
-          touch stamp
       - name: Disable logging
         # Progress bar spams non-interactive console
         # File log dumps environment to uploaded artifact
@@ -54,7 +50,8 @@ jobs:
           ct-ng source
       - name: collect tarballs
         run: |
-          find src -type f -not -newer stamp -delete -print
+          ./dedup-tars.sh src
+          echo "archiving:"
           tar -cvf src.tar src
       - name: Save sources
         uses: actions/cache/save@v4
@@ -133,7 +130,8 @@ jobs:
           CT_PREFIX: ${{github.workspace}}/out
       - name: collect tarballs
         run: |
-          find src -type f -not -newer stamp -delete -print
+          ./dedup-tars.sh src
+          echo "archiving:"
           tar -cvf src.tar src
       - name: Save sources
         uses: actions/cache/save@v4
