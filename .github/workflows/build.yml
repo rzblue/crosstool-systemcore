@@ -125,6 +125,7 @@ jobs:
           cat >> systemcore_defconfig <<EOF
           # CT_LOG_PROGRESS_BAR is not set
           EOF
+          ls
       - name: Download toolchain sources
         run: |
           mkdir -p src
@@ -132,6 +133,7 @@ jobs:
           sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
           ct-ng source
+          ls
         env:
           CT_PREFIX: ${{github.workspace}}/out
       - name: collect tarballs
