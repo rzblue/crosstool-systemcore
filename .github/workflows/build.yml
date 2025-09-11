@@ -81,6 +81,9 @@ jobs:
     name: build-${{matrix.os}}
     runs-on: ${{matrix.os}}
     steps:
+      - run: |
+          touch stamp
+          ls
       - name: Install packages
         run: | 
           brew install autoconf automake bash binutils gawk gnu-sed \
