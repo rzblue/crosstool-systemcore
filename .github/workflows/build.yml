@@ -52,9 +52,12 @@ jobs:
         with:
           name: aarch64-systemcore-linux-gnu
           path: ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz
-  build-macos-aarch64:
-    runs-on: macos-13
-
+  build-macos:
+    strategy:
+      matrix:
+        os: [macos-13, macos-14]
+    name: build-${{matrix.os}}
+    runs-on: ${{matrix.os}}
     steps:
       - name: Install packages
         run: | 
