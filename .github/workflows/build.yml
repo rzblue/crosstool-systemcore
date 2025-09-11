@@ -45,16 +45,25 @@ jobs:
           # CT_LOG_PROGRESS_BAR is not set
           # CT_LOG_TO_FILE is not set
           EOF
-      - name: Build toolchain
+      - name: Download toolchain sources
         run: |
+          mkdir -p src
           ct-ng defconfig DEFCONFIG=systemcore_defconfig
           sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
-          ct-ng build
+          ct-ng source
       - name: collect tarballs
         run: |
           find src -type f -not -newer stamp -delete -print
           tar -cvf src.tar src
+      - name: Save sources
+        uses: actions/cache/save@v4
+        with:
+          path: src.tar
+          key: src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
+      - name: Build toolchain
+        run: |
+          ct-ng build
       - name: Archive toolchain
         run: tar -cvzf aarch64-systemcore-linux-gnu.tar.gz aarch64-systemcore-linux-gnu/
         working-directory: /home/runner/x-tools/
@@ -115,19 +124,29 @@ jobs:
           cat >> systemcore_defconfig <<EOF
           # CT_LOG_PROGRESS_BAR is not set
           EOF
-      - run: echo $PATH
-      - name: Build toolchain
+      - name: Download toolchain sources
         run: |
+          mkdir -p src
           ct-ng defconfig DEFCONFIG=systemcore_defconfig
           sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
-          ct-ng build
+          ct-ng source
         env:
           CT_PREFIX: ${{github.workspace}}/out
       - name: collect tarballs
         run: |
           find src -type f -not -newer stamp -delete -print
           tar -cvf src.tar src
+      - name: Save sources
+        uses: actions/cache/save@v4
+        with:
+          path: src.tar
+          key: src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
+      - name: Build toolchain
+        run: |
+          ct-ng build
+        env:
+          CT_PREFIX: ${{github.workspace}}/out
       - name: Upload log on failure
         if: failure()
         uses: actions/upload-artifact@v4
