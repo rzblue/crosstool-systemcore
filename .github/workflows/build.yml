@@ -113,9 +113,6 @@ jobs:
         run: |
           tar -xvf src.tar || true
           touch stamp
-          ls
-        working-directory: /tmp
-
       - name: Disable progress bar
         # Progress bar spams non-interactive console
         # File log dumps environment to uploaded artifact
@@ -125,7 +122,6 @@ jobs:
           cat >> systemcore_defconfig <<EOF
           # CT_LOG_PROGRESS_BAR is not set
           EOF
-          ls
       - name: Download toolchain sources
         run: |
           mkdir -p src
@@ -133,12 +129,10 @@ jobs:
           sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
           ct-ng source
-          ls
         env:
           CT_PREFIX: ${{github.workspace}}/out
       - name: collect tarballs
         run: |
-          ls
           find src -type f -not -newer stamp -delete -print
           tar -cvf src.tar src
       - name: Save sources
