@@ -50,11 +50,18 @@ jobs:
       - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
-          name: aarch64-systemcore-linux-gnu
+          name: aarch64-systemcore-linux-gnu_x86_64-linux-gnu
           path: ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz
-  build-macos-aarch64:
-    runs-on: macos-13
-
+  build-macos:
+    strategy:
+      matrix:
+        include:
+          - os: macos-13
+            artifactId: x86_64-apple-darwin
+          - os: macos-14
+            artifactId: aarch64-apple-darwin
+    name: build-${{matrix.os}}
+    runs-on: ${{matrix.os}}
     steps:
       - name: Install packages
         run: | 
@@ -107,5 +114,5 @@ jobs:
       - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
-          name: aarch64-systemcore-linux-gnu
+          name: aarch64-systemcore-linux-gnu_${{matrix.artifactId}}
           path: ${{github.workspace}}/out/aarch64-systemcore-linux-gnu.tar.gz
