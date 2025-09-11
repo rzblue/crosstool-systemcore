@@ -6,6 +6,7 @@ CT_ARCH_CPU="cortex-a76+crypto"
 CT_ARCH_64=y
 CT_TOOLCHAIN_PKGVERSION="systemcoreathome"
 CT_TARGET_VENDOR="systemcore"
+CT_TOOLCHAIN_CMAKE_TOOLCHAIN_FILE=y
 CT_KERNEL_LINUX=y
 CT_LINUX_SRC_DEVEL=y
 CT_LINUX_DEVEL_URL="https://github.com/raspberrypi/linux.git"
