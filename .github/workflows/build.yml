@@ -29,10 +29,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: src.tar
-          key: src.tar-linux-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
+          key: src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
           restore-keys: |
-            src.tar-linux-${{ hashFiles('install-crosstool.sh') }}-
-            src.tar-linux-
+            src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-
+            src.tar-${{runner.os}}-
       - name: extract tarballs
         run: |
           tar -xvf src.tar || true
@@ -81,9 +81,6 @@ jobs:
     name: build-${{matrix.os}}
     runs-on: ${{matrix.os}}
     steps:
-      - run: |
-          touch stamp
-          ls
       - name: Install packages
         run: | 
           brew install autoconf automake bash binutils gawk gnu-sed \
@@ -116,6 +113,7 @@ jobs:
         run: |
           tar -xvf src.tar || true
           touch stamp
+          ls
         working-directory: /tmp
 
       - name: Disable progress bar
@@ -138,6 +136,7 @@ jobs:
           CT_PREFIX: ${{github.workspace}}/out
       - name: collect tarballs
         run: |
+          ls
           find src -type f -not -newer stamp -delete -print
           tar -cvf src.tar src
       - name: Save sources
