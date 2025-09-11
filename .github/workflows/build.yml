@@ -62,9 +62,11 @@ jobs:
                gnu-tar help2man make meson ncurses ninja pkg-config texinfo libtool
       - name: Setup crosstool-ng
         run: |
+          PATH="$PATH:$(brew --prefix)/opt/binutils/bin"
+          export PATH
           mkdir crosstool-ng && curl -L https://github.com/crosstool-ng/crosstool-ng/releases/download/crosstool-ng-1.27.0/crosstool-ng-1.27.0.tar.xz | tar -xJ -C crosstool-ng --strip-components=1
           cd crosstool-ng
-          env SED=/opt/homebrew/opt/gnu-sed/libexec/gnubin/sed OBJCOPY=$(brew --prefix binutils)"/bin/objcopy" RANLIB=$(brew --prefix binutils)"/bin/ranlib" READELF=$(brew --prefix binutils)"/bin/readelf" AWK=$(brew --prefix gawk)"/bin/gawk" OBJDUMP=$(brew --prefix binutils)"/bin/objdump" BISON=$(brew --prefix bison)"/bin/bison" ./configure
+          ./configure
           make
           sudo make install
         working-directory: /tmp
