@@ -73,6 +73,7 @@ jobs:
           path: ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz
   build-macos:
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-13, macos-14]
     name: build-${{matrix.os}}
