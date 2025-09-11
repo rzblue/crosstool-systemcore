@@ -53,7 +53,7 @@ jobs:
           name: aarch64-systemcore-linux-gnu
           path: ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz
   build-macos-aarch64:
-    runs-on: macos-latest
+    runs-on: macos-13
 
     steps:
       - name: Install packages
@@ -79,6 +79,8 @@ jobs:
       - name: Disable progress bar
         # Progress bar spams non-interactive console
         # File log dumps environment to uploaded artifact
+        # CT_COMP_TOOLS_BISON=y
+        # CT_BISON_V_3_8=y
         run: |
           cat >> systemcore_defconfig <<EOF
           # CT_LOG_PROGRESS_BAR is not set
@@ -86,7 +88,6 @@ jobs:
       - run: echo $PATH
       - name: Build toolchain
         run: |
-          export SED=/opt/homebrew/opt/gnu-sed/libexec/gnubin/sed OBJCOPY=$(brew --prefix binutils)"/bin/objcopy" RANLIB=$(brew --prefix binutils)"/bin/ranlib" READELF=$(brew --prefix binutils)"/bin/readelf" AWK=$(brew --prefix gawk)"/bin/gawk" OBJDUMP=$(brew --prefix binutils)"/bin/objdump" BISON=$(brew --prefix bison)"/bin/bison"
           ct-ng defconfig DEFCONFIG=systemcore_defconfig
           ct-ng build
         env:
