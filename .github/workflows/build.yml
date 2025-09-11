@@ -86,6 +86,7 @@ jobs:
       - run: echo $PATH
       - name: Build toolchain
         run: |
+          export SED=/opt/homebrew/opt/gnu-sed/libexec/gnubin/sed OBJCOPY=$(brew --prefix binutils)"/bin/objcopy" RANLIB=$(brew --prefix binutils)"/bin/ranlib" READELF=$(brew --prefix binutils)"/bin/readelf" AWK=$(brew --prefix gawk)"/bin/gawk" OBJDUMP=$(brew --prefix binutils)"/bin/objdump" BISON=$(brew --prefix bison)"/bin/bison"
           ct-ng defconfig DEFCONFIG=systemcore_defconfig
           ct-ng build
         env:
