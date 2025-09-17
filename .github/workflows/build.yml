@@ -132,6 +132,7 @@ jobs:
           ct-ng defconfig DEFCONFIG=systemcore_defconfig
           sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
+          sed -i -e '/CT_GDB_CROSS_PYTHON/s/y$/n/' .config # MACOS SPECIFIC
           ct-ng source
         env:
           CT_PREFIX: ${{github.workspace}}/out
