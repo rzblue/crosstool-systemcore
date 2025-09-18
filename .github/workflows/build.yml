@@ -10,9 +10,19 @@ on:
 
 jobs:
   build-linux-x64:
+    strategy:
+      fail-fast: false
+      matrix:
+        defconfig: [systemcore_defconfig, systemcore_pi4_defconfig]
+        
+
     runs-on: ubuntu-22.04
 
     steps:
+      - name: Set environment variables
+        run: |
+          echo "DEFCONFIG=${{matrix.defconfig}}" >> "$GITHUB_ENV"
+          echo "TOOLCHAIN_TRIPLE=$([[ ${{matrix.defconfig}} == "systemcore_defconfig" ]] && echo "aarch64-systemcore-linux-gnu" || echo "aarch64-systemcore_pi4-linux-gnu")" >> "$GITHUB_ENV"
       - name: Install packages
         run: | 
           sudo apt-get update && sudo apt-get install -y gcc g++ gperf bison flex texinfo help2man make libncurses5-dev \
@@ -62,15 +72,16 @@ jobs:
         run: |
           ct-ng build
       - name: Archive toolchain
-        run: tar -cvzf aarch64-systemcore-linux-gnu.tar.gz aarch64-systemcore-linux-gnu/
+        run: tar -cvzf "$TOOLCHAIN_TRIPLE".tar.gz "$TOOLCHAIN_TRIPLE"/
         working-directory: /home/runner/x-tools/
       - name: Test toolchain
-        run: ./test/test-toolchain.sh -a /home/runner/x-tools/aarch64-systemcore-linux-gnu.tar.gz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
+        run: ./test/test-toolchain.sh -a /home/runner/x-tools/"$TOOLCHAIN_TRIPLE".tar.gz -t "$TOOLCHAIN_TRIPLE" -p "$TOOLCHAIN_TRIPLE"- -l cxx -l fortran
       - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
-          name: aarch64-systemcore-linux-gnu_x86_64-linux-gnu
-          path: ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz
+          name: ${{env.TOOLCHAIN_TRIPLE}}_x86_64-linux-gnu
+          path: ~/x-tools/${{env.TOOLCHAIN_TRIPLE}}.tar.gz
+
   build-macos:
     strategy:
       fail-fast: false
