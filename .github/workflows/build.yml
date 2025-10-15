@@ -18,16 +18,11 @@ jobs:
           sudo apt-get update && sudo apt-get install -y gcc g++ gperf bison flex texinfo help2man make libncurses5-dev \
           python3-dev autoconf automake libtool libtool-bin gawk wget bzip2 xz-utils unzip \
           patch libstdc++6 rsync git meson ninja-build
+      - uses: actions/checkout@v5
       - name: Setup crosstool-ng
         run: |
-          mkdir crosstool-ng && curl -L https://github.com/crosstool-ng/crosstool-ng/releases/download/crosstool-ng-1.27.0/crosstool-ng-1.27.0.tar.xz | tar -xJ -C crosstool-ng --strip-components=1
-          cd crosstool-ng
-          ./configure
-          make
-          sudo make install
-        working-directory: /tmp
-
-      - uses: actions/checkout@v5
+          ./install-crosstool.sh --prefix="$HOME/.local/"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Disable logging
         # Progress bar spams non-interactive console
         # File log dumps environment to uploaded artifact
@@ -67,16 +62,6 @@ jobs:
         run: | 
           brew install autoconf automake bash binutils gawk gnu-sed \
                gnu-tar help2man make meson ncurses ninja pkg-config texinfo libtool
-      - name: Setup crosstool-ng
-        run: |
-          PATH="$PATH:$(brew --prefix)/opt/binutils/bin"
-          export PATH
-          mkdir crosstool-ng && curl -L https://github.com/crosstool-ng/crosstool-ng/releases/download/crosstool-ng-1.27.0/crosstool-ng-1.27.0.tar.xz | tar -xJ -C crosstool-ng --strip-components=1
-          cd crosstool-ng
-          ./configure
-          make
-          sudo make install
-        working-directory: /tmp
       - name: create case sensitive workspace volume for macOS
         run: |
           cd ..
@@ -85,6 +70,12 @@ jobs:
           hdiutil mount "${HOME}/Workspace.sparseimage" -mountroot /Users/runner/work/crosstool-systemcore
           cd crosstool-systemcore
       - uses: actions/checkout@v5
+      - name: Setup crosstool-ng
+        run: |
+          PATH="$PATH:$(brew --prefix)/opt/binutils/bin"
+          export PATH
+          ./install-crosstool.sh --prefix="$HOME/.local/"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Disable progress bar
         # Progress bar spams non-interactive console
         # File log dumps environment to uploaded artifact
