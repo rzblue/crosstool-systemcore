@@ -9,7 +9,7 @@ cleanup() {
 trap cleanup EXIT
 
 cd "$WORKDIR"
-curl -sL "$CROSSTOOL_SRC" | tar -xJ --strip-components=1
+curl -fsSL "$CROSSTOOL_SRC" | tar -xJ --strip-components=1
 ./configure "$@"
 make
 make install

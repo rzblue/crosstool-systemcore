@@ -23,16 +23,11 @@ jobs:
         run: |
           echo "DEFCONFIG=${{matrix.defconfig}}" >> "$GITHUB_ENV"
           echo "TOOLCHAIN_TRIPLE=$([[ ${{matrix.defconfig}} == "systemcore_defconfig" ]] && echo "aarch64-systemcore-linux-gnu" || echo "aarch64-systemcore_pi4-linux-gnu")" >> "$GITHUB_ENV"
-      - name: Install packages
-        run: | 
-          sudo apt-get update && sudo apt-get install -y gcc g++ gperf bison flex texinfo help2man make libncurses5-dev \
-          python3-dev autoconf automake libtool libtool-bin gawk wget bzip2 xz-utils unzip \
-          patch libstdc++6 rsync git meson ninja-build
+
       - uses: actions/checkout@v5
-      - name: Setup crosstool-ng
-        run: |
-          ./install-crosstool.sh --prefix="$HOME/.local/"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: setup crosstool
+        uses: ./.github/actions/setup-crosstool-ng
 
       - name: cache tarballs
         id: cache
@@ -94,10 +89,6 @@ jobs:
     name: build-${{matrix.os}}
     runs-on: ${{matrix.os}}
     steps:
-      - name: Install packages
-        run: | 
-          brew install autoconf automake bash binutils gawk gnu-sed \
-               gnu-tar help2man make meson ncurses ninja pkg-config texinfo libtool
       - name: create case sensitive workspace volume for macOS
         run: |
           cd ..
@@ -106,12 +97,8 @@ jobs:
           hdiutil mount "${HOME}/Workspace.sparseimage" -mountroot /Users/runner/work/crosstool-systemcore
           cd crosstool-systemcore
       - uses: actions/checkout@v5
-      - name: Setup crosstool-ng
-        run: |
-          PATH="$PATH:$(brew --prefix)/opt/binutils/bin"
-          export PATH
-          ./install-crosstool.sh --prefix="$HOME/.local/"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: setup crosstool
+        uses: ./.github/actions/setup-crosstool-ng
 
       - name: cache tarballs
         id: cache
