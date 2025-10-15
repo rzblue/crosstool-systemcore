@@ -8,86 +8,32 @@ on:
   push:
   pull_request:
 
+env:
+  MACOSX_DEPLOYMENT_TARGET: "10.9"
+
 jobs:
-  build-linux-x64:
+  build:
+    name: Build ${{ matrix.target_triple }} for ${{matrix.host_triple}}
     strategy:
       fail-fast: false
       matrix:
-        defconfig: [systemcore_defconfig, systemcore_pi4_defconfig]
-        
-
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Set environment variables
-        run: |
-          echo "DEFCONFIG=${{matrix.defconfig}}" >> "$GITHUB_ENV"
-          echo "TOOLCHAIN_TRIPLE=$([[ ${{matrix.defconfig}} == "systemcore_defconfig" ]] && echo "aarch64-systemcore-linux-gnu" || echo "aarch64-systemcore_pi4-linux-gnu")" >> "$GITHUB_ENV"
-
-      - uses: actions/checkout@v5
-
-      - name: setup crosstool
-        uses: ./.github/actions/setup-crosstool-ng
-
-      - name: cache tarballs
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: src.tar
-          key: src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
-      - name: extract tarballs
-        run: |
-          tar -xvf src.tar || true
-      - name: Disable logging
-        # Progress bar spams non-interactive console
-        # File log dumps environment to uploaded artifact
-        run: |
-          cat >> systemcore_defconfig <<EOF
-          # CT_LOG_PROGRESS_BAR is not set
-          # CT_LOG_TO_FILE is not set
-          EOF
-      - name: Download toolchain sources
-        run: |
-          mkdir -p src
-          ct-ng defconfig DEFCONFIG=systemcore_defconfig
-          sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
-          sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
-          ct-ng source
-      - name: collect tarballs
-        run: |
-          ./dedup-tars.sh src
-          echo "archiving:"
-          tar -cvf src.tar src
-      - name: Save sources
-        uses: actions/cache/save@v4
-        with:
-          path: src.tar
-          key: src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
-      - name: Build toolchain
-        run: |
-          ct-ng build
-      - name: Archive toolchain
-        run: tar -cvzf "$TOOLCHAIN_TRIPLE".tar.gz "$TOOLCHAIN_TRIPLE"/
-        working-directory: /home/runner/x-tools/
-      - name: Test toolchain
-        run: ./test/test-toolchain.sh -a /home/runner/x-tools/"$TOOLCHAIN_TRIPLE".tar.gz -t "$TOOLCHAIN_TRIPLE" -p "$TOOLCHAIN_TRIPLE"- -l cxx -l fortran
-      - name: Upload toolchain
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{env.TOOLCHAIN_TRIPLE}}_x86_64-linux-gnu
-          path: ~/x-tools/${{env.TOOLCHAIN_TRIPLE}}.tar.gz
-
-  build-macos:
-    strategy:
-      fail-fast: false
-      matrix:
+        target: [systemcore, systemcore_pi4]
+        host_triple: [x86_64-linux-gnu, aarch64-apple-darwin, x86_64-apple-darwin]
         include:
-          - os: macos-13
-            artifactId: x86_64-apple-darwin
-          - os: macos-14
-            artifactId: aarch64-apple-darwin
-    name: build-${{matrix.os}}
-    runs-on: ${{matrix.os}}
+          - host_triple: x86_64-linux-gnu
+            runner: ubuntu-22.04
+          - host_triple: aarch64-apple-darwin
+            runner: macos-14
+          - host_triple: x86_64-apple-darwin
+            runner: macos-13
+          - target: systemcore
+            defconfig: systemcore_defconfig
+            target_triple: aarch64-systemcore-linux-gnu
+          - target: systemcore_pi4
+            defconfig: systemcore_pi4_defconfig
+            target_triple: aarch64-systemcore_pi4-linux-gnu
+
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: create case sensitive workspace volume for macOS
         run: |
@@ -96,7 +42,10 @@ jobs:
           hdiutil create "${HOME}/Workspace.sparseimage" -volname crosstool-systemcore -type SPARSE -size 30g -fs HFSX
           hdiutil mount "${HOME}/Workspace.sparseimage" -mountroot /Users/runner/work/crosstool-systemcore
           cd crosstool-systemcore
+        if: ${{ runner.os == 'macOS' }}
+
       - uses: actions/checkout@v5
+
       - name: setup crosstool
         uses: ./.github/actions/setup-crosstool-ng
 
@@ -105,32 +54,24 @@ jobs:
         uses: actions/cache@v4
         with:
           path: src.tar
-          key: src.tar-${{matrix.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
+          key: src.tar-${{matrix.runner}}-${{ hashFiles('.github/actions/setup-crosstool-ng/*') }}-${{ hashFiles(matrix.defconfig) }}
           restore-keys: |
-            src.tar-${{matrix.os}}-${{ hashFiles('install-crosstool.sh') }}-
-            src.tar-${{matrix.os}}-
-            src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-
-            src.tar-${{runner.os}}-
+            src.tar-${{matrix.runner}}-${{ hashFiles('.github/actions/setup-crosstool-ng/*') }}-
+            src.tar-${{matrix.runner}}-
       - name: extract tarballs
         run: |
           tar -xvf src.tar || true
-          touch stamp
-      - name: Disable progress bar
-        # Progress bar spams non-interactive console
-        # File log dumps environment to uploaded artifact
-        # CT_COMP_TOOLS_BISON=y
-        # CT_BISON_V_3_8=y
-        run: |
-          cat >> systemcore_defconfig <<EOF
-          # CT_LOG_PROGRESS_BAR is not set
-          EOF
-      - name: Download toolchain sources
+      - name: Configure ct-ng
         run: |
           mkdir -p src
-          ct-ng defconfig DEFCONFIG=systemcore_defconfig
-          sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
+          ct-ng defconfig DEFCONFIG=${{matrix.defconfig}}
+          ./modify-config.sh CT_LOG_PROGRESS_BAR n
+          if [[ $RUNNER_OS == "macOS" ]]; then
+            ./modify-config.sh CT_GDB_CROSS_PYTHON n # MACOS SPECIFIC
+          fi
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
-          sed -i -e '/CT_GDB_CROSS_PYTHON/s/y$/n/' .config # MACOS SPECIFIC
+      - name: Download toolchain sources
+        run: |
           ct-ng source
         env:
           CT_PREFIX: ${{github.workspace}}/out
@@ -143,7 +84,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: src.tar
-          key: src.tar-${{matrix.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
+          key: src.tar-${{matrix.runner}}-${{ hashFiles('.github/actions/setup-crosstool-ng/*') }}-${{ hashFiles(matrix.defconfig) }}
       - name: Build toolchain
         run: |
           ct-ng build
@@ -155,12 +96,12 @@ jobs:
         with:
           path: ${{github.workspace}}/build.log
       - name: Archive toolchain
-        run: tar -cvzf aarch64-systemcore-linux-gnu.tar.gz aarch64-systemcore-linux-gnu/
+        run: tar -cvzf "${{matrix.target_triple}}".tar.gz "${{matrix.target_triple}}"/
         working-directory: out/
       - name: Test toolchain
-        run: ./test/test-toolchain.sh -a ${{github.workspace}}/out/aarch64-systemcore-linux-gnu.tar.gz -t aarch64-systemcore-linux-gnu -p aarch64-systemcore-linux-gnu- -l cxx -l fortran
+        run: ./test/test-toolchain.sh -a "${{github.workspace}}/out/${{matrix.target_triple}}.tar.gz" -t "${{matrix.target_triple}}" -p "${{matrix.target_triple}}-" -l cxx -l fortran
       - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
-          name: aarch64-systemcore-linux-gnu_${{matrix.artifactId}}
-          path: ${{github.workspace}}/out/aarch64-systemcore-linux-gnu.tar.gz
+          name: ${{matrix.target_triple}}_${{matrix.host_triple}}
+          path: ${{github.workspace}}/out/${{matrix.target_triple}}.tar.gz
