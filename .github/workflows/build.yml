@@ -23,6 +23,16 @@ jobs:
         run: |
           ./install-crosstool.sh --prefix="$HOME/.local/"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: cache tarballs
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: src.tar
+          key: src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
+      - name: extract tarballs
+        run: |
+          tar -xvf src.tar || true
       - name: Disable logging
         # Progress bar spams non-interactive console
         # File log dumps environment to uploaded artifact
@@ -31,12 +41,26 @@ jobs:
           # CT_LOG_PROGRESS_BAR is not set
           # CT_LOG_TO_FILE is not set
           EOF
-
+      - name: Download toolchain sources
+        run: |
+          mkdir -p src
+          ct-ng defconfig DEFCONFIG=systemcore_defconfig
+          sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
+          sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
+          ct-ng source
+      - name: collect tarballs
+        run: |
+          ./dedup-tars.sh src
+          echo "archiving:"
+          tar -cvf src.tar src
+      - name: Save sources
+        uses: actions/cache/save@v4
+        with:
+          path: src.tar
+          key: src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
       - name: Build toolchain
         run: |
-          ct-ng defconfig DEFCONFIG=systemcore_defconfig
           ct-ng build
-
       - name: Archive toolchain
         run: tar -cvzf aarch64-systemcore-linux-gnu.tar.gz aarch64-systemcore-linux-gnu/
         working-directory: /home/runner/x-tools/
@@ -49,6 +73,7 @@ jobs:
           path: ~/x-tools/aarch64-systemcore-linux-gnu.tar.gz
   build-macos:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: macos-13
@@ -76,6 +101,22 @@ jobs:
           export PATH
           ./install-crosstool.sh --prefix="$HOME/.local/"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: cache tarballs
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: src.tar
+          key: src.tar-${{matrix.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
+          restore-keys: |
+            src.tar-${{matrix.os}}-${{ hashFiles('install-crosstool.sh') }}-
+            src.tar-${{matrix.os}}-
+            src.tar-${{runner.os}}-${{ hashFiles('install-crosstool.sh') }}-
+            src.tar-${{runner.os}}-
+      - name: extract tarballs
+        run: |
+          tar -xvf src.tar || true
+          touch stamp
       - name: Disable progress bar
         # Progress bar spams non-interactive console
         # File log dumps environment to uploaded artifact
@@ -85,10 +126,27 @@ jobs:
           cat >> systemcore_defconfig <<EOF
           # CT_LOG_PROGRESS_BAR is not set
           EOF
-      - run: echo $PATH
+      - name: Download toolchain sources
+        run: |
+          mkdir -p src
+          ct-ng defconfig DEFCONFIG=systemcore_defconfig
+          sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
+          sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
+          ct-ng source
+        env:
+          CT_PREFIX: ${{github.workspace}}/out
+      - name: collect tarballs
+        run: |
+          ./dedup-tars.sh src
+          echo "archiving:"
+          tar -cvf src.tar src
+      - name: Save sources
+        uses: actions/cache/save@v4
+        with:
+          path: src.tar
+          key: src.tar-${{matrix.os}}-${{ hashFiles('install-crosstool.sh') }}-${{ hashFiles('systemcore_defconfig') }}
       - name: Build toolchain
         run: |
-          ct-ng defconfig DEFCONFIG=systemcore_defconfig
           ct-ng build
         env:
           CT_PREFIX: ${{github.workspace}}/out
