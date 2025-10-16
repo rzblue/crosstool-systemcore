@@ -54,10 +54,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: src.tar
-          key: src.tar-${{matrix.runner}}-${{ hashFiles('.github/actions/setup-crosstool-ng/*') }}-${{ hashFiles(matrix.defconfig) }}
+          key: src.tar-${{matrix.host_triple}}-${{ hashFiles('.github/actions/setup-crosstool-ng/*') }}-${{ hashFiles(matrix.defconfig) }}
           restore-keys: |
-            src.tar-${{matrix.runner}}-${{ hashFiles('.github/actions/setup-crosstool-ng/*') }}-
-            src.tar-${{matrix.runner}}-
+            src.tar-${{matrix.host_triple}}-${{ hashFiles('.github/actions/setup-crosstool-ng/*') }}-
+            src.tar-${{matrix.host_triple}}-
       - name: extract tarballs
         run: |
           tar -xvf src.tar || true
@@ -84,7 +84,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: src.tar
-          key: src.tar-${{matrix.runner}}-${{ hashFiles('.github/actions/setup-crosstool-ng/*') }}-${{ hashFiles(matrix.defconfig) }}
+          key: src.tar-${{matrix.host_triple}}-${{ hashFiles('.github/actions/setup-crosstool-ng/*') }}-${{ hashFiles(matrix.defconfig) }}
       - name: Build toolchain
         run: |
           ct-ng build
