@@ -17,23 +17,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [systemcore, systemcore_pi4]
-        host_triple: [x86_64-linux-gnu, aarch64-linux-gnu, aarch64-apple-darwin, x86_64-apple-darwin]
+        target: [systemcore] #, systemcore_pi4]
+        # host_triple: [x86_64-linux-gnu, aarch64-linux-gnu, aarch64-apple-darwin, x86_64-apple-darwin]
+        host_triple: [x86_64-apple-darwin]
+
         include:
-          - host_triple: x86_64-linux-gnu
-            runner: ubuntu-22.04
-          - host_triple: aarch64-linux-gnu
-            runner: ubuntu-22.04-arm
-          - host_triple: aarch64-apple-darwin
-            runner: macos-14
+          # - canadian: false
+          # - host_triple: x86_64-linux-gnu
+          #   runner: ubuntu-22.04
+          # - host_triple: aarch64-linux-gnu
+          #   runner: ubuntu-22.04-arm
+          # - host_triple: aarch64-apple-darwin
+          #   runner: macos-14
           - host_triple: x86_64-apple-darwin
-            runner: macos-13
+            runner: macos-14
+            canadian: true
           - target: systemcore
             defconfig: systemcore_defconfig
             target_triple: aarch64-systemcore-linux-gnu
-          - target: systemcore_pi4
-            defconfig: systemcore_pi4_defconfig
-            target_triple: aarch64-systemcore_pi4-linux-gnu
+          # - target: systemcore_pi4
+          #   defconfig: systemcore_pi4_defconfig
+          #   target_triple: aarch64-systemcore_pi4-linux-gnu
 
     runs-on: ${{ matrix.runner }}
     steps:
@@ -72,6 +76,36 @@ jobs:
             ./modify-config.sh CT_GDB_CROSS_PYTHON n # MACOS SPECIFIC
           fi
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
+      - name: Configure canadian
+        if: matrix.canadian && runner.os == 'macOS' 
+        run: |
+          for tool in ar as dlltool gcc gcc-ar gcc-nm gcc-ranlib g++ gcj gnatbind gdc gnatmake gnatls gnatlink ld libtool nm objcopy objdump ranlib strip windres; do
+            echo $tool
+            where=$(which $tool || true)
+            if [ -z "${where}" ]; then
+              # gnu binutils aren't on the path and have a g prefix
+              brew_path=$(brew --prefix)
+              maybe_where="${brew_path}/opt/binutils/bin/g${tool}"
+              echo $maybe_where
+              if [ -e "${maybe_where}" ]; then
+                where=$maybe_where
+              fi
+            fi
+            if ! [ -z "${where}" ]; then
+              echo "exec ${where} \"\$@\"" > ~/.local/bin/${{matrix.host_triple}}-${tool}
+              chmod +x ~/.local/bin/${{matrix.host_triple}}-${tool}
+              echo "${{matrix.host_triple}}-${tool} -> ${where}"
+            fi
+          done
+          ./modify-config.sh CT_CROSS n
+          ./modify-config.sh CT_CANADIAN y
+          ./modify-config.sh CT_TOOLCHAIN_TYPE \"canadian\"
+          ./modify-config.sh CT_HOST \"${{ matrix.host_triple }}\"
+          ./modify-config.sh CT_EXTRA_CFLAGS_FOR_HOST '"-target x86_64-apple-macos"'
+          ./modify-config.sh CT_EXTRA_LDFLAGS_FOR_HOST '"-target x86_64-apple-macos"'
+          echo $PATH
+          which ${{matrix.host_triple}}-gcc || true
+          ${{matrix.host_triple}}-gcc -v
       - name: Download toolchain sources
         run: |
           ct-ng source
