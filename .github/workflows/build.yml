@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         target: [systemcore, systemcore_pi4]
-        host_triple: [x86_64-linux-gnu, aarch64-linux-gnu, aarch64-apple-darwin, x86_64-apple-darwin]
+        host_triple: [x86_64-linux-gnu, aarch64-linux-gnu, aarch64-apple-darwin]
         include:
           - host_triple: x86_64-linux-gnu
             runner: ubuntu-22.04
@@ -26,8 +26,6 @@ jobs:
             runner: ubuntu-22.04-arm
           - host_triple: aarch64-apple-darwin
             runner: macos-14
-          - host_triple: x86_64-apple-darwin
-            runner: macos-13
           - target: systemcore
             defconfig: systemcore_defconfig
             target_triple: aarch64-systemcore-linux-gnu
