@@ -133,9 +133,9 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: List artifacts
-        run: ls -R artifacts
+        run: ls -R
 
       - name: Create Release
         uses: ncipollo/release-action@v1.20.0
         with:
-          artifacts: "artifacts/**/*.tar.gz"
+          artifacts: "**/*.tar.gz"
