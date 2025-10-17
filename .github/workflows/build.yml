@@ -73,6 +73,9 @@ jobs:
           fi
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
           ./modify-config.sh CT_PREFIX_DIR '"${CT_PREFIX:-${HOME}/x-tools}/${{ env.TOOLCHAIN_NAME }}"'
+      - name: Configure version
+        run: |
+          ./modify-config.sh CT_TOOLCHAIN_PKGVERSION "\"$(source <(grep CT_TOOLCHAIN_PKGVERSION .config); echo $CT_TOOLCHAIN_PKGVERSION) $(git describe --always)\""
       - name: Download toolchain sources
         run: |
           ct-ng source
