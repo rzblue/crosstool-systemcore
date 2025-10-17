@@ -103,13 +103,13 @@ jobs:
         run: |
           tar -cvzf "${{ env.TOOLCHAIN_NAME }}.tar.gz" "${{ env.TOOLCHAIN_NAME }}/"
         working-directory: out/
-      - name: Test toolchain
-        run: ./test/test-toolchain.sh -a "${{github.workspace}}/out/${{ env.TOOLCHAIN_NAME }}.tar.gz" -t "${{ env.TOOLCHAIN_NAME }}" -p "${{ matrix.target_triple }}-" -l cxx -l fortran
       - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.TOOLCHAIN_NAME }}
           path: ${{ github.workspace }}/out/${{ env.TOOLCHAIN_NAME }}.tar.gz
+      - name: Test toolchain
+        run: ./test/test-toolchain.sh -a "${{github.workspace}}/out/${{ env.TOOLCHAIN_NAME }}.tar.gz" -t "${{ env.TOOLCHAIN_NAME }}" -p "${{ matrix.target_triple }}-" -l cxx -l fortran
 
   release:
     name: Create Release
