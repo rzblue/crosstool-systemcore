@@ -40,10 +40,10 @@ jobs:
       - name: create case sensitive workspace volume for macOS
         run: |
           cd ..
-          rmdir crosstool-systemcore
-          hdiutil create "${HOME}/Workspace.sparseimage" -volname crosstool-systemcore -type SPARSE -size 30g -fs HFSX
-          hdiutil mount "${HOME}/Workspace.sparseimage" -mountroot /Users/runner/work/crosstool-systemcore
-          cd crosstool-systemcore
+          rmdir toolchains-systemcore
+          hdiutil create "${HOME}/Workspace.sparseimage" -volname toolchains-systemcore -type SPARSE -size 30g -fs HFSX
+          hdiutil mount "${HOME}/Workspace.sparseimage" -mountroot /Users/runner/work/toolchains-systemcore
+          cd toolchains-systemcore
         if: ${{ runner.os == 'macOS' }}
 
       - uses: actions/checkout@v5
