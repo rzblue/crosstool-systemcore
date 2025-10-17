@@ -72,6 +72,7 @@ jobs:
             ./modify-config.sh CT_GDB_CROSS_PYTHON n # MACOS SPECIFIC
           fi
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
+          ./modify-config.sh CT_PREFIX_DIR '"${CT_PREFIX:-${HOME}/x-tools}/${{ env.TOOLCHAIN_NAME }}"'
       - name: Download toolchain sources
         run: |
           ct-ng source
@@ -100,7 +101,6 @@ jobs:
           path: ${{github.workspace}}/build.log
       - name: Archive toolchain
         run: |
-          mv ${{ matrix.target_triple }} ${{ env.TOOLCHAIN_NAME }}
           tar -cvzf "${{ env.TOOLCHAIN_NAME }}.tar.gz" "${{ env.TOOLCHAIN_NAME }}/"
         working-directory: out/
       - name: Test toolchain
