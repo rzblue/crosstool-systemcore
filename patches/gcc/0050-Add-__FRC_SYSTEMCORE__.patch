@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ryan Blue <ryanzblue@gmail.com>
+Date: Fri, 17 Oct 2025 01:12:20 -0400
+Subject: [PATCH] Add __FRC_SYSTEMCORE__ to platform config
+
+---
+ gcc/config/linux.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gcc/config/linux.h b/gcc/config/linux.h
+index c3c4a219e670bc8d6524e1ec3bf785755643f8f1..b2bb51568e42eee5e9b790a0280ebc9287609150 100644
+--- a/gcc/config/linux.h
++++ b/gcc/config/linux.h
+@@ -46,6 +46,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+     do {							\
+ 	if (OPTION_GLIBC)					\
+ 	  builtin_define ("__gnu_linux__");			\
++	builtin_define ("__FRC_SYSTEMCORE__=2025");		\
+ 	builtin_define_std ("linux");				\
+ 	builtin_define_std ("unix");				\
+ 	builtin_assert ("system=linux");			\
+-- 
+2.34.1
+
