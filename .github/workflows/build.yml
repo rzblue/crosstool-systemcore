@@ -78,6 +78,11 @@ jobs:
       - name: Configure version
         run: |
           ./modify-config.sh CT_TOOLCHAIN_PKGVERSION "\"$(source <(grep CT_TOOLCHAIN_PKGVERSION .config); echo $CT_TOOLCHAIN_PKGVERSION) $(git describe --always)\""
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+      - name: Configure version (release)
+        run: |
+          ./modify-config.sh CT_TOOLCHAIN_PKGVERSION "\"$(source <(grep CT_TOOLCHAIN_PKGVERSION .config); echo $CT_TOOLCHAIN_PKGVERSION) ${{ github.ref_name }}\""
+        if: startsWith(github.ref, 'refs/tags/v') && github.repository == 'rzblue/toolchains-systemcore'
       - name: Download toolchain sources
         run: |
           ct-ng source
@@ -119,7 +124,7 @@ jobs:
   release:
     name: Create Release
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && github.repository == 'rzblue/toolchains-systemcore'
     runs-on: ubuntu-latest
     permissions:
       contents: write
