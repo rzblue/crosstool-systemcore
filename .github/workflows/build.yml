@@ -47,6 +47,8 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
 
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: setup crosstool
         uses: ./.github/actions/setup-crosstool-ng
