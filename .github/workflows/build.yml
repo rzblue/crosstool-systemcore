@@ -34,6 +34,8 @@ jobs:
             target_triple: aarch64-systemcore_pi4-linux-gnu
 
     runs-on: ${{ matrix.runner }}
+    env:
+      TOOLCHAIN_NAME: ${{matrix.target_triple }}_${{ matrix.host_triple }}
     steps:
       - name: create case sensitive workspace volume for macOS
         run: |
@@ -94,15 +96,17 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{matrix.target_triple}}_${{matrix.host_triple}}-log
+          name: ${{ env.TOOLCHAIN_NAME }}-log
           path: ${{github.workspace}}/build.log
       - name: Archive toolchain
-        run: tar -cvzf "${{matrix.target_triple}}".tar.gz "${{matrix.target_triple}}"/
+        run: |
+          mv ${{ matrix.target_triple }} ${{ env.TOOLCHAIN_NAME }}
+          tar -cvzf "${{ env.TOOLCHAIN_NAME }}.tar.gz" "${{ env.TOOLCHAIN_NAME }}/"
         working-directory: out/
       - name: Test toolchain
-        run: ./test/test-toolchain.sh -a "${{github.workspace}}/out/${{matrix.target_triple}}.tar.gz" -t "${{matrix.target_triple}}" -p "${{matrix.target_triple}}-" -l cxx -l fortran
+        run: ./test/test-toolchain.sh -a "${{github.workspace}}/out/${{ env.TOOLCHAIN_NAME }}.tar.gz" -t "${{ env.TOOLCHAIN_NAME }}" -p "${{ matrix.target_triple }}-" -l cxx -l fortran
       - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
-          name: ${{matrix.target_triple}}_${{matrix.host_triple}}
-          path: ${{github.workspace}}/out/${{matrix.target_triple}}.tar.gz
+          name: ${{ env.TOOLCHAIN_NAME }}
+          path: ${{ github.workspace }}/out/${{ env.TOOLCHAIN_NAME }}.tar.gz
